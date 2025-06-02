@@ -1,0 +1,89 @@
+{
+  "name": "graph-generator",
+  "displayName": "Graph Generator",
+  "description": "Generate data visualization graphs using AI",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "graph-generator.generate",
+        "title": "Generate Graph from Description"
+      },
+      {
+        "command": "graph-generator.setApiKey",
+        "title": "Set E2B Sandbox API Key"
+      },
+      {
+        "command": "graph-generator.execcode",
+        "title": "Generate Graph from Program"
+      }
+    ],
+    "configuration": {
+      "title": "Graph Generator",
+      "properties": {
+        "graphGenerator.ollamaEndpoint": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama API endpoint URL"
+        },
+        "graphGenerator.defaultModel": {
+          "type": "string",
+          "default": "gemma3:27b",
+          "description": "Default Ollama model to use"
+        },
+        "graphGenerator.outputDirectory": {
+          "type": "string",
+          "default": "./graphs",
+          "description": "Directory to save generated files (relative to workspace root)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "pnpm run package",
+    "compile": "vite build",
+    "watch": "vite build --watch",
+    "package": "vite build --mode production",
+    "compile-tests": "tsc -p . --outDir out",
+    "watch-tests": "tsc -p . -w --outDir out",
+    "lint": "eslint src --ext ts",
+    "test-watch": "tsc -p . -w --outDir out/test",
+    "dev": "vite"
+  },
+  "packageManager": "pnpm@8.6.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "vscode"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "16.x",
+    "@types/node-fetch": "^2.6.4",
+    "@types/vscode": "^1.80.0",
+    "@typescript-eslint/eslint-plugin": "^5.59.1",
+    "@typescript-eslint/parser": "^5.59.1",
+    "@vitejs/plugin-react": "^4.2.0",
+    "@vscode/test-electron": "^2.3.0",
+    "eslint": "^8.39.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.0.4",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "@e2b/code-interpreter": "^1.5.0",
+    "node-fetch": "^2.6.11"
+  }
+}
