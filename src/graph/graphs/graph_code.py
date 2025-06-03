@@ -1,36 +1,25 @@
 # ================================================================================
 # USER PROMPT:
-# Create a 3d plot to show an example of electromagnetic wave. ensure
-# surface is coloured based on z values. provide meaningful title,label
-# and legend
+# Draw a sample bar graph
 #
-# MODEL: qwq:latest
+# MODEL: gemma3:27b
 # ================================================================================
 
-import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import warnings
-warnings.filterwarnings("ignore", category=UserWarning, module='pydantic')
+import numpy as np
 
-# Generate sample data for electromagnetic wave
-x = np.linspace(-5, 5, 100)
-y = np.linspace(-5, 5, 100)
-X, Y = np.meshgrid(x, y)
-Z = np.sin(X) * np.cos(Y)
+# Sample data
+categories = ['Category A', 'Category B', 'Category C', 'Category D']
+values = [25, 40, 30, 55]
 
-# Create 3D plot
-fig = plt.figure(figsize=(12, 8))
-ax = fig.add_subplot(111, projection='3d')
-surf = ax.plot_surface(X, Y, Z, cmap='viridis', edgecolor='none', shade=True)
-ax.set_xlabel('X Axis (meters)', fontsize=12)
-ax.set_ylabel('Y Axis (meters)', fontsize=12)
-ax.set_zlabel('Amplitude', fontsize=12)
-ax.set_title('Electromagnetic Wave Example', fontsize=14, pad=20)
+# Create the bar graph
+plt.figure(figsize=(8, 6))
+plt.bar(categories, values, color='skyblue')
+plt.xlabel('Categories')
+plt.ylabel('Values')
+plt.title('Sample Bar Graph')
+plt.grid(axis='y', linestyle='--')
 
-# Add colorbar for z-values
-fig.colorbar(surf, ax=ax, shrink=0.8, aspect=25, label='Z Value (Intensity)')
-
-plt.tight_layout()
-plt.savefig('electromagnetic_wave_plot.png')
-plt.show()
+# Save the graph as an image
+plt.savefig('bar_graph.png')
+plt.close()

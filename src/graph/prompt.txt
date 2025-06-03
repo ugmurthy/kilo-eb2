@@ -1,0 +1,4 @@
+Create a 3D graph where z = sin(sqrt(x^2+y^2)). Ensure the surface is color coded based on z value and varies from  red to yellow. Provide meaningful title, labels and legend.
+
+Create a Bar chart showing Beer sales by month. superimpose a line graph showing avg temperature in a month for all months. Ensure you generate meaningfull data for summer months. Provide a catchy title. Also provide meaningful labels and legend for the temperature and Beer sales.
+ 
