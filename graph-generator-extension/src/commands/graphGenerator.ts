@@ -82,15 +82,37 @@ export async function execute(context: vscode.ExtensionContext): Promise<void> {
       }
     }
     
-    // 1. Get user input (model selection and graph description)
-    const selectedModel = await showModelSelector();
+    // 1. Get user input (graph description first, then optional model selection)
     const userPrompt = await showPromptInput();
+    
+    // Get configuration for default model
+    const config = vscode.workspace.getConfiguration('graphGenerator');
+    const defaultModel = config.get<string>('defaultModel') || 'gemma3:27b';
+    
+    // Ask if user wants to select a different model
+    const selectModel = 'Select Model';
+    const useDefault = `Use Default (${defaultModel})`;
+    const modelChoice = await vscode.window.showInformationMessage(
+      'Which model would you like to use?',
+      useDefault,
+      selectModel
+    );
+    
+    // Determine which model to use
+    let selectedModel: string;
+    if (modelChoice === selectModel) {
+      // User wants to select a model
+      selectedModel = await showModelSelector();
+    } else {
+      // Use default model
+      selectedModel = defaultModel;
+    }
     
     // 2. Prepare messages for Ollama
     const messages: ollamaService.ChatMessage[] = [
       {
         role: 'system',
-        content: 'You are an expert code generator specializing in data visualization. Generate Python code that creates graphs based on user descriptions. Include sample data in your code. Only output Python code blocks with no explanations. The code should use matplotlib, seaborn, or plotlib to generate a visual graph that can be saved as an image. Suppress any warnings related to module pydantic. Do not include any other text or explanations in your response.'
+        content: 'You are an expert code generator specializing in data visualization. Generate Python code that creates graphs based on user descriptions. Include sample data in your code. The code should use matplotlib, seaborn, or plotlib to generate a visual graph that can be saved as an image. Suppress any warnings related to module pydantic. Format your response as follows:\n\n1. A brief explanation of what the code does\n2. The Python code in a code block using triple backticks with "python" language identifier\n\nExample format:\nThis code creates a bar chart showing sales data.\n\n```python\nimport matplotlib.pyplot as plt\n# Code here\n```'
       },
       {
         role: 'user',
@@ -98,8 +120,8 @@ export async function execute(context: vscode.ExtensionContext): Promise<void> {
       }
     ];
     
-    // 3. Generate code using Ollama
-    const response = await ollamaService.generateCode(selectedModel, messages);
+    // 3. Generate code using Ollama with streaming
+    const response = await ollamaService.generateCodeStreaming(selectedModel, messages);
     
     // 4. Extract code blocks
     const codeBlocks = extractCode(response);

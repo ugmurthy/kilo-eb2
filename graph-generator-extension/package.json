@@ -2,7 +2,8 @@
   "name": "graph-generator",
   "displayName": "Graph Generator",
   "description": "Generate data visualization graphs using AI",
-  "version": "0.1.0",
+  "version": "0.1.23",
+  "publisher":"UGMurthy",
   "engines": {
     "vscode": "^1.80.0"
   },
@@ -15,7 +16,7 @@
     "commands": [
       {
         "command": "graph-generator.generate",
-        "title": "Generate Graph from Description"
+        "title": "Generate Graph from Description (with Streaming)"
       },
       {
         "command": "graph-generator.setApiKey",

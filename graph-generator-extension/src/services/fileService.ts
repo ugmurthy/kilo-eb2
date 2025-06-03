@@ -13,6 +13,24 @@ import { CodeBlock, formatCodeWithComments } from '../utils/codeExtractor';
 import { ExecutionResult } from './sandboxService';
 
 /**
+ * Generates a timestamp string in the format YYYYMMDD-HHMMSS
+ * @returns Timestamp string
+ */
+function generateTimestamp(): string {
+  const now = new Date();
+  
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  
+  return `${year}${month}${day}-${hours}${minutes}${seconds}`;
+}
+
+/**
  * Gets the output directory from configuration or uses the workspace root
  * @returns The path to the output directory
  */
@@ -55,15 +73,18 @@ export async function saveAndOpenFiles(
   const outputDir = getOutputDirectory();
   const savedFiles: string[] = [];
   
+  // Generate timestamp for filenames
+  const timestamp = generateTimestamp();
+  
   // Save code files
   for (let i = 0; i < codeBlocks.length; i++) {
     const codeBlock = codeBlocks[i];
-    const fileName = codeBlocks.length > 1 
-      ? `graph_code_${i + 1}.py` 
-      : "graph_code.py";
+    const fileName = codeBlocks.length > 1
+      ? `graph_code_${i + 1}_${timestamp}.py`
+      : `graph_code_${timestamp}.py`;
     
     const filePath = pathJoin(outputDir, fileName);
-    
+    console.log(`Saving code to: ${filePath}`);
     // Format code with comments
     const formattedCode = formatCodeWithComments(
       codeBlock.code,
@@ -83,7 +104,7 @@ export async function saveAndOpenFiles(
   if (executionResult.results.length > 0 && executionResult.results[0].png) {
     const result = executionResult.results[0];
     if (result.png) {
-      imagePath = pathJoin(outputDir, "graph.png");
+      imagePath = pathJoin(outputDir, `graph_${timestamp}.png`);
       writeFileSync(imagePath, Buffer.from(result.png, "base64"));
       savedFiles.push(imagePath);
     }

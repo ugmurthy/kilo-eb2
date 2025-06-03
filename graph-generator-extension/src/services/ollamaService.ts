@@ -21,6 +21,16 @@ interface ChatRequest {
 }
 
 /**
+ * Interface for streaming chat response
+ */
+interface StreamingChatResponse {
+  message: {
+    content: string;
+  };
+  done: boolean;
+}
+
+/**
  * Interface for chat response
  */
 interface ChatResponse {
@@ -141,4 +151,177 @@ export async function generateCode(
       }
     }
   );
+}
+
+/**
+ * Generates code using Ollama with streaming output to an editor tab
+ * @param model The model to use
+ * @param messages The messages to send
+ * @param maxTokens Optional maximum number of tokens to generate
+ * @returns A promise that resolves when streaming is complete
+ */
+export async function generateCodeStreaming(
+  model: string,
+  messages: ChatMessage[],
+  maxTokens: number = 4096
+): Promise<string> {
+  // Create a new untitled markdown document
+  const document = await vscode.workspace.openTextDocument({
+    language: 'markdown',
+    content: ''
+  });
+  
+  // Show the document in an editor
+  const editor = await vscode.window.showTextDocument(document);
+  
+  try {
+    // Validate inputs
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new Error('Messages must be a non-empty array');
+    }
+    
+    if (!model || typeof model !== 'string') {
+      throw new Error('Model must be a non-empty string');
+    }
+    
+    // Create a status bar item to show progress
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left);
+    statusBarItem.text = `$(sync~spin) Generating with ${model}...`;
+    statusBarItem.show();
+    
+    // Prepare the chat request with streaming enabled
+    const request: ChatRequest = {
+      model: model,
+      messages: messages,
+      stream: true, // Use actual streaming API
+      max_tokens: maxTokens
+    };
+    
+    // Send the chat request to Ollama
+    const endpoint = getOllamaEndpoint();
+    const response = await fetch(`${endpoint}/api/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(request)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Ollama API error: ${response.statusText}`);
+    }
+    
+    // Process the streaming response
+    let fullContent = '';
+    
+    try {
+      // Convert the response to text and process line by line
+      const text = await response.text();
+      const lines = text.split('\n').filter(line => line.trim() !== '');
+      
+      // Show progress in status bar
+      statusBarItem.text = `$(sync~spin) Processing response from ${model}...`;
+      
+      if (lines.length === 0) {
+        // If no lines were returned, handle as a non-streaming response
+        vscode.window.showWarningMessage('No streaming data received, trying to process as a single response');
+        
+        try {
+          // Try to parse the text as a single JSON object
+          const data = JSON.parse(text) as ChatResponse;
+          if (data.message && data.message.content) {
+            await editor.edit(editBuilder => {
+              editBuilder.insert(new vscode.Position(0, 0), data.message.content);
+            });
+            fullContent = data.message.content;
+          }
+        } catch (e) {
+          // If that fails, just show the raw text
+          await editor.edit(editBuilder => {
+            editBuilder.insert(new vscode.Position(0, 0), text);
+          });
+          fullContent = text;
+        }
+      } else {
+        // Process each line of the streaming response
+        for (const line of lines) {
+          try {
+            // Parse the JSON line
+            const data = JSON.parse(line) as StreamingChatResponse;
+            
+            if (data.message && data.message.content) {
+              const content = data.message.content;
+              
+              // Append to the document
+              await editor.edit(editBuilder => {
+                const position = new vscode.Position(document.lineCount, 0);
+                editBuilder.insert(position, content);
+              });
+              
+              // Append to full content
+              fullContent += content;
+              
+              // Add a small delay to make the streaming visible
+              await new Promise(resolve => setTimeout(resolve, 10));
+            }
+          } catch (e) {
+            console.error('Error parsing streaming response line:', e);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Error processing streaming response:', e);
+      vscode.window.showErrorMessage(`Error processing streaming response: ${e instanceof Error ? e.message : 'Unknown error'}`);
+    }
+    
+    // Hide the status bar item
+    statusBarItem.dispose();
+    
+    // Save the document as generated.md in the workspace
+    try {
+      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolder) {
+        throw new Error("No workspace folder open");
+      }
+      
+      // Create a file path for generated.md
+      const generatedMdPath = vscode.Uri.joinPath(workspaceFolder.uri, 'generated.md');
+      
+      // Write the content to the file
+      await vscode.workspace.fs.writeFile(
+        generatedMdPath,
+        Buffer.from(fullContent, 'utf8')
+      );
+      
+      // Close the untitled document
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      
+      // Open the saved file
+      const savedDocument = await vscode.workspace.openTextDocument(generatedMdPath);
+      await vscode.window.showTextDocument(savedDocument);
+      
+      // Show success message
+      vscode.window.showInformationMessage(`Generated content saved to generated.md`);
+    } catch (e) {
+      console.error('Error saving generated.md:', e);
+      vscode.window.showErrorMessage(`Failed to save generated.md: ${e instanceof Error ? e.message : 'Unknown error'}`);
+      
+      // If we can't save to a file, at least rename the untitled document
+      try {
+        // Try to rename the untitled document
+        await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
+        vscode.window.showInformationMessage('Please save the document as "generated.md"');
+      } catch (saveError) {
+        console.error('Error with saveAs command:', saveError);
+      }
+    }
+    
+    return fullContent;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error generating code: ${error.message}`);
+    } else {
+      throw new Error('Unknown error generating code');
+    }
+  }
 }
