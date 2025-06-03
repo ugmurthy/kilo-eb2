@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 // Use explicit import for node-fetch to avoid Vite externalization issues
 import fetch, { Response } from 'node-fetch';
+import { join as pathJoin } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 
 /**
  * Interface for chat message
@@ -60,6 +62,33 @@ interface OllamaTagsResponse {
 function getOllamaEndpoint(): string {
   const config = vscode.workspace.getConfiguration('graphGenerator');
   return config.get<string>('ollamaEndpoint') || 'http://localhost:11434';
+}
+
+/**
+ * Gets the output directory from configuration or uses the workspace root
+ * @returns The path to the output directory
+ */
+function getOutputDirectory(): string {
+  const config = vscode.workspace.getConfiguration('graphGenerator');
+  const outputDir = config.get<string>('outputDirectory') || '';
+  
+  // Get the workspace folder
+  const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolder) {
+    throw new Error("No workspace folder open");
+  }
+  
+  // If output directory is specified, create it if it doesn't exist
+  if (outputDir) {
+    const fullPath = pathJoin(workspaceFolder.uri.fsPath, outputDir);
+    if (!existsSync(fullPath)) {
+      mkdirSync(fullPath, { recursive: true });
+    }
+    return fullPath;
+  }
+  
+  // Otherwise use workspace root
+  return workspaceFolder.uri.fsPath;
 }
 
 /**
@@ -277,16 +306,33 @@ export async function generateCodeStreaming(
     // Hide the status bar item
     statusBarItem.dispose();
     
-    // Save the document as generated.md in the workspace
+    // Save the document as generated.md in the output directory
     try {
-      const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-      if (!workspaceFolder) {
-        throw new Error("No workspace folder open");
+      // Get the output directory
+      const outputDirectory = getOutputDirectory();
+      
+      // Create a file path for generated.md in the output directory
+      const generatedMdPath = vscode.Uri.file(pathJoin(outputDirectory, 'generated.md'));
+      
+      // Ask for confirmation before saving
+      const saveOptions = ['Save', 'Save As...', 'Cancel'];
+      const saveChoice = await vscode.window.showInformationMessage(
+        `Save generated content to ${generatedMdPath.fsPath}?`,
+        ...saveOptions
+      );
+      
+      if (saveChoice === 'Cancel') {
+        // User cancelled, keep the untitled document open
+        return fullContent;
+      } else if (saveChoice === 'Save As...') {
+        // Use the saveAs command to let the user choose a location
+        await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
+        // Close the original untitled document after saving
+        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+        return fullContent;
       }
       
-      // Create a file path for generated.md
-      const generatedMdPath = vscode.Uri.joinPath(workspaceFolder.uri, 'generated.md');
-      
+      // User chose 'Save', so save to the default location
       // Write the content to the file
       await vscode.workspace.fs.writeFile(
         generatedMdPath,
@@ -301,16 +347,16 @@ export async function generateCodeStreaming(
       await vscode.window.showTextDocument(savedDocument);
       
       // Show success message
-      vscode.window.showInformationMessage(`Generated content saved to generated.md`);
+      vscode.window.showInformationMessage(`Generated content saved to ${generatedMdPath.fsPath}`);
     } catch (e) {
       console.error('Error saving generated.md:', e);
       vscode.window.showErrorMessage(`Failed to save generated.md: ${e instanceof Error ? e.message : 'Unknown error'}`);
       
-      // If we can't save to a file, at least rename the untitled document
+      // If we can't save to a file, prompt the user to save manually
       try {
         // Try to rename the untitled document
         await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
-        vscode.window.showInformationMessage('Please save the document as "generated.md"');
+        vscode.window.showInformationMessage('Please save the document to your preferred location');
       } catch (saveError) {
         console.error('Error with saveAs command:', saveError);
       }

@@ -9,7 +9,7 @@ import { extractCode } from '../utils/codeExtractor';
  * Shows a quick pick to select an Ollama model
  * @returns The selected model
  */
-async function showModelSelector(): Promise<string> {
+async function showModelSelector(defaultModel: string): Promise<string> {
   try {
     // Fetch available models
     const models = await ollamaService.fetchAvailableModels();
@@ -17,19 +17,20 @@ async function showModelSelector(): Promise<string> {
     // Show quick pick
     const selected = await vscode.window.showQuickPick(
       models.map(model => ({ label: model })),
-      { placeHolder: 'Select an AI model to use' }
+      {
+        placeHolder: 'Select an AI model to use (ESC to use default)',
+        title: `Select Model (default: ${defaultModel})`,
+      }
     );
     
+    // If user cancels, return the default model
     if (!selected) {
-      throw new Error("Model selection cancelled");
+      return defaultModel;
     }
     
     return selected.label;
   } catch (error) {
     // If there's an error fetching models, use the default model from settings
-    const config = vscode.workspace.getConfiguration('graphGenerator');
-    const defaultModel = config.get<string>('defaultModel') || 'gemma3:27b';
-    
     vscode.window.showWarningMessage(
       `Could not fetch models, using default model: ${defaultModel}`
     );
@@ -82,31 +83,15 @@ export async function execute(context: vscode.ExtensionContext): Promise<void> {
       }
     }
     
-    // 1. Get user input (graph description first, then optional model selection)
+    // 1. Get user input (graph description first, then model selection)
     const userPrompt = await showPromptInput();
     
     // Get configuration for default model
     const config = vscode.workspace.getConfiguration('graphGenerator');
     const defaultModel = config.get<string>('defaultModel') || 'gemma3:27b';
     
-    // Ask if user wants to select a different model
-    const selectModel = 'Select Model';
-    const useDefault = `Use Default (${defaultModel})`;
-    const modelChoice = await vscode.window.showInformationMessage(
-      'Which model would you like to use?',
-      useDefault,
-      selectModel
-    );
-    
-    // Determine which model to use
-    let selectedModel: string;
-    if (modelChoice === selectModel) {
-      // User wants to select a model
-      selectedModel = await showModelSelector();
-    } else {
-      // Use default model
-      selectedModel = defaultModel;
-    }
+    // Show model selector directly (will return default if user cancels)
+    const selectedModel = await showModelSelector(defaultModel);
     
     // 2. Prepare messages for Ollama
     const messages: ollamaService.ChatMessage[] = [
