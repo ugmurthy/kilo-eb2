@@ -1,6 +1,13 @@
-This code creates a 4x3 grid of subplots, each displaying a different type of plot with sample data. It includes line plots, bar plots, scatter plots, histograms, box plots, pie charts, area plots, step plots, and combinations thereof, to demonstrate a variety of visualization techniques. Each subplot has a title and a unique color scheme.
+# ================================================================================
+# USER PROMPT:
+# Draw graph with subplots showing different graphs in each subplot. The
+# main plot has 4x3 subl plots - show line plots, bar plots , scatter
+# plots etc chose type of subplot and generate necessary data. Ensure
+# each subplot has a title and a different color
+#
+# MODEL: gemma3:27b
+# ================================================================================
 
-```python
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -77,4 +84,3 @@ axes[3, 2].set_title('Step Plot')
 plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust for the suptitle
 plt.savefig('subplots_example.png')
 plt.show()
-```

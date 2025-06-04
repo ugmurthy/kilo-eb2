@@ -2,7 +2,7 @@
   "name": "graph-generator",
   "displayName": "Graph Generator",
   "description": "Generate data visualization graphs using AI",
-  "version": "0.1.25",
+  "version": "0.1.26",
   "publisher":"UGMurthy",
   "engines": {
     "vscode": "^1.80.0"
@@ -10,7 +10,7 @@
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": ["onCommand:graph-generator.generate","onCommand:graph-generator.execcode"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [

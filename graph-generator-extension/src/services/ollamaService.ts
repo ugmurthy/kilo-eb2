@@ -342,11 +342,11 @@ export async function generateCodeStreaming(
       );
       
       // Close the untitled document
-      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      // await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       
-      // Open the saved file
-      const savedDocument = await vscode.workspace.openTextDocument(generatedMdPath);
-      await vscode.window.showTextDocument(savedDocument);
+      // // Open the saved file
+      // const savedDocument = await vscode.workspace.openTextDocument(generatedMdPath);
+      // await vscode.window.showTextDocument(savedDocument);
       
       // Show success message
       vscode.window.showInformationMessage(`Generated content saved to ${generatedMdPath.fsPath}`);
