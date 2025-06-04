@@ -2,7 +2,7 @@
   "name": "graph-generator",
   "displayName": "Graph Generator",
   "description": "Generate data visualization graphs using AI",
-  "version": "0.1.27",
+  "version": "0.1.28",
   "publisher":"UGMurthy",
   "engines": {
     "vscode": "^1.80.0"

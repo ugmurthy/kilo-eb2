@@ -314,15 +314,16 @@ export async function generateCodeStreaming(
       // Create a file path for generated.md in the output directory
       const generatedMdPath = vscode.Uri.file(pathJoin(outputDirectory, 'generated.md'));
       
-      //////////// Removed SAVE SAVEAS and CANCEL Options as there are not relevant
-      await vscode.commands.executeCommand('workbench.action.files.saveAs', generatedMdPath);
-    
       
-      //await vscode.workspace.fs.writeFile(
-      //  generatedMdPath,
-      //  Buffer.from(fullContent, 'utf8')
-      //);
+      await vscode.workspace.fs.writeFile(
+        generatedMdPath,
+        Buffer.from(fullContent, 'utf8')
+      );
      
+      if (document.isDirty) {
+          vscode.window.showWarningMessage('Unsaved changes will be discarded!');
+          await vscode.commands.executeCommand('workbench.action.revertAndCloseActiveEditor');
+      }
       // Close the untitled document
       // await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       
