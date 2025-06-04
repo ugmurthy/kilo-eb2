@@ -328,8 +328,13 @@ export async function generateCodeStreaming(
       // await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       
       // // Open the saved file
-      // const savedDocument = await vscode.workspace.openTextDocument(generatedMdPath);
-      // await vscode.window.showTextDocument(savedDocument);
+      
+      
+      const savedDocument = await vscode.workspace.openTextDocument(generatedMdPath);
+      await vscode.window.showTextDocument(savedDocument, {
+            preview: false, // Set to false to open as a full editor, not a preview
+            viewColumn: vscode.ViewColumn.Active // Open in the active column
+        });
       
       // Show success message
       vscode.window.showInformationMessage(`Generated content saved to ${generatedMdPath.fsPath}`);
