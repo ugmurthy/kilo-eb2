@@ -315,32 +315,14 @@ export async function generateCodeStreaming(
       const generatedMdPath = vscode.Uri.file(pathJoin(outputDirectory, 'generated.md'));
       
       //////////// Removed SAVE SAVEAS and CANCEL Options as there are not relevant
-      // // Ask for confirmation before saving
-      // const saveOptions = ['Save', 'Save As...', 'Cancel'];
-      // const saveChoice = await vscode.window.showInformationMessage(
-      //   `Save generated content to ${generatedMdPath.fsPath}?`,
-      //   ...saveOptions
-      // );
+      await vscode.commands.executeCommand('workbench.action.files.saveAs', generatedMdPath);
+    
       
-      // if (saveChoice === 'Cancel') {
-      //   // User cancelled, keep the untitled document open
-      //   return fullContent;
-      // } else if (saveChoice === 'Save As...') {
-      //   // Use the saveAs command to let the user choose a location
-      //   await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
-      //   // Close the original untitled document after saving
-      //   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-      //   return fullContent;
-      // }
-      //////////////
-
-      // User chose 'Save', so save to the default location
-      // Write the content to the file
-      await vscode.workspace.fs.writeFile(
-        generatedMdPath,
-        Buffer.from(fullContent, 'utf8')
-      );
-      
+      //await vscode.workspace.fs.writeFile(
+      //  generatedMdPath,
+      //  Buffer.from(fullContent, 'utf8')
+      //);
+     
       // Close the untitled document
       // await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
       
