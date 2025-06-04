@@ -314,24 +314,26 @@ export async function generateCodeStreaming(
       // Create a file path for generated.md in the output directory
       const generatedMdPath = vscode.Uri.file(pathJoin(outputDirectory, 'generated.md'));
       
-      // Ask for confirmation before saving
-      const saveOptions = ['Save', 'Save As...', 'Cancel'];
-      const saveChoice = await vscode.window.showInformationMessage(
-        `Save generated content to ${generatedMdPath.fsPath}?`,
-        ...saveOptions
-      );
+      //////////// Removed SAVE SAVEAS and CANCEL Options as there are not relevant
+      // // Ask for confirmation before saving
+      // const saveOptions = ['Save', 'Save As...', 'Cancel'];
+      // const saveChoice = await vscode.window.showInformationMessage(
+      //   `Save generated content to ${generatedMdPath.fsPath}?`,
+      //   ...saveOptions
+      // );
       
-      if (saveChoice === 'Cancel') {
-        // User cancelled, keep the untitled document open
-        return fullContent;
-      } else if (saveChoice === 'Save As...') {
-        // Use the saveAs command to let the user choose a location
-        await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
-        // Close the original untitled document after saving
-        await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-        return fullContent;
-      }
-      
+      // if (saveChoice === 'Cancel') {
+      //   // User cancelled, keep the untitled document open
+      //   return fullContent;
+      // } else if (saveChoice === 'Save As...') {
+      //   // Use the saveAs command to let the user choose a location
+      //   await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
+      //   // Close the original untitled document after saving
+      //   await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+      //   return fullContent;
+      // }
+      //////////////
+
       // User chose 'Save', so save to the default location
       // Write the content to the file
       await vscode.workspace.fs.writeFile(
@@ -352,14 +354,16 @@ export async function generateCodeStreaming(
       console.error('Error saving generated.md:', e);
       vscode.window.showErrorMessage(`Failed to save generated.md: ${e instanceof Error ? e.message : 'Unknown error'}`);
       
+      ///////////////
       // If we can't save to a file, prompt the user to save manually
-      try {
-        // Try to rename the untitled document
-        await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
-        vscode.window.showInformationMessage('Please save the document to your preferred location');
-      } catch (saveError) {
-        console.error('Error with saveAs command:', saveError);
-      }
+      // try {
+      //   // Try to rename the untitled document
+      //   await vscode.commands.executeCommand('workbench.action.files.saveAs', document.uri);
+      //   vscode.window.showInformationMessage('Please save the document to your preferred location');
+      // } catch (saveError) {
+      //   console.error('Error with saveAs command:', saveError);
+      // }
+      ///////////////
     }
     
     return fullContent;
